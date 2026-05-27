@@ -23,7 +23,6 @@ const CHART_COLORS = [
 export const Analytics: React.FC = () => {
   const products = useAppStore((state) => state.products);
   const setProducts = useAppStore((state) => state.setProducts);
-  const liveUpdates = useAppStore((state) => state.liveUpdates);
 
   // Load products into store if empty
   useEffect(() => {
@@ -35,32 +34,18 @@ export const Analytics: React.FC = () => {
     return () => { active = false; };
   }, [products.length, setProducts]);
 
-  // Merge live updates into product data
-  const mergedProducts = useMemo(() => {
-    return products.map((p) => {
-      const u = liveUpdates[p.id];
-      if (!u) return p;
-      return {
-        ...p,
-        price: u.price ?? p.price,
-        rating: u.rating ?? p.rating,
-        stock: u.stock ?? p.stock,
-      };
-    });
-  }, [products, liveUpdates]);
-
-  // Computed analytics metrics
+  // Computed analytics metrics (products include live updates via useRealTimeUpdates on Product List)
   const metrics = useMemo(() => {
-    if (mergedProducts.length === 0) return null;
+    if (products.length === 0) return null;
 
-    const totalProducts = mergedProducts.length;
-    const avgRating = mergedProducts.reduce((s, p) => s + p.rating, 0) / totalProducts;
-    const totalInventoryValue = mergedProducts.reduce((s, p) => s + p.price * p.stock, 0);
+    const totalProducts = products.length;
+    const avgRating = products.reduce((s, p) => s + p.rating, 0) / totalProducts;
+    const totalInventoryValue = products.reduce((s, p) => s + p.price * p.stock, 0);
 
     // Category aggregations
     const countsMap: Record<string, number> = {};
     const valueMap: Record<string, number> = {};
-    mergedProducts.forEach((p) => {
+    products.forEach((p) => {
       const cat = p.category.replace(/-/g, ' ');
       countsMap[cat] = (countsMap[cat] || 0) + 1;
       valueMap[cat] = (valueMap[cat] || 0) + p.price * p.stock;
@@ -69,9 +54,9 @@ export const Analytics: React.FC = () => {
     const categoryValue = Object.entries(valueMap).map(([name, value]) => ({ name, value: Math.round(value) }));
 
     // Stock insights
-    const outOfStock = mergedProducts.filter((p) => p.stock === 0);
-    const lowStock = mergedProducts.filter((p) => p.stock > 0 && p.stock < 10);
-    const wellStocked = mergedProducts.filter((p) => p.stock >= 100);
+    const outOfStock = products.filter((p) => p.stock === 0);
+    const lowStock = products.filter((p) => p.stock > 0 && p.stock < 10);
+    const wellStocked = products.filter((p) => p.stock >= 100);
 
     return {
       totalProducts,
@@ -83,7 +68,7 @@ export const Analytics: React.FC = () => {
       lowStock,
       wellStocked,
     };
-  }, [mergedProducts]);
+  }, [products]);
 
   if (products.length === 0) {
     return (

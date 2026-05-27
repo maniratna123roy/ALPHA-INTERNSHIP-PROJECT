@@ -93,7 +93,7 @@ export const ProductList: React.FC = () => {
   }, [products]);
 
   // Hook to simulate live product polling updates in the background (every 15s)
-  useRealTimeUpdates(products);
+  useRealTimeUpdates();
 
   // Filter & sort logic (memoized)
   const processedProducts = useMemo(() => {
@@ -211,6 +211,7 @@ export const ProductList: React.FC = () => {
       createProduct({
         ...formFields,
         images: [formFields.thumbnail],
+        discountPercentage: 0,
       });
       addToast(`Product "${formFields.title}" created successfully!`, 'success');
     } else if (modalType === 'edit' && editingProduct) {

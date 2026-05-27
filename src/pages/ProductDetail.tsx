@@ -8,11 +8,14 @@ import { Star, ChevronLeft, ChevronRight, ArrowLeft, Eye, EyeOff, Package, Miles
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+  const productId = Number(id);
+
   const role = useAppStore((state) => state.role);
   const isAdmin = role === 'admin';
   const publishedSettings = useAppStore((state) => state.publishedSettings);
-  const liveUpdates = useAppStore((state) => state.liveUpdates);
+  const storeProduct = useAppStore((state) =>
+    state.products.find((p) => p.id === productId)
+  );
   const togglePublish = useAppStore((state) => state.togglePublish);
   const addToast = useAppStore((state) => state.addToast);
 
@@ -20,8 +23,6 @@ export const ProductDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-
-  const productId = Number(id);
 
   // Fetch product detail
   useEffect(() => {
@@ -66,20 +67,17 @@ export const ProductDetail: React.FC = () => {
     }
   }, [loading, product, isPublished, isAdmin, navigate, addToast]);
 
-  // Overlay live simulated updates (price, rating, stock)
+  // Overlay live values from store when product list polling has updated this item
   const mergedProduct = useMemo(() => {
     if (!product) return null;
-    const updates = liveUpdates[product.id];
-    if (updates) {
-      return {
-        ...product,
-        price: updates.price !== undefined ? updates.price : product.price,
-        rating: updates.rating !== undefined ? updates.rating : product.rating,
-        stock: updates.stock !== undefined ? updates.stock : product.stock,
-      };
-    }
-    return product;
-  }, [product, liveUpdates]);
+    if (!storeProduct) return product;
+    return {
+      ...product,
+      price: storeProduct.price,
+      rating: storeProduct.rating,
+      stock: storeProduct.stock,
+    };
+  }, [product, storeProduct]);
 
   const handlePrevImage = () => {
     if (!mergedProduct) return;
